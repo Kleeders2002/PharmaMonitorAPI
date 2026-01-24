@@ -9,33 +9,82 @@ from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.datomonitoreo import DatoMonitoreo
 from core.models.productofarmaceutico import ProductoFarmaceutico
 
+class SensorStatus:
+    """Rastrea el estado de cada sensor individualmente"""
+    def __init__(self):
+        self.temperatura_ok = True
+        self.humedad_ok = True
+        self.lux_ok = True  # Simulado
+        self.presion_ok = True  # Simulado
+
+    def get_failed_sensors(self) -> list[str]:
+        """Retorna lista de sensores que fallaron"""
+        failed = []
+        if not self.temperatura_ok:
+            failed.append("temperatura")
+        if not self.humedad_ok:
+            failed.append("humedad")
+        if not self.lux_ok:
+            failed.append("lux")
+        if not self.presion_ok:
+            failed.append("presion")
+        return failed
+
 class SensorDataManager:
     def __init__(self, nodemcu_ip: str = None, use_real_data: bool = True):
         self.nodemcu_ip = nodemcu_ip
         self.use_real_data = use_real_data
         self.last_sensor_data = None
         self.sensor_timeout = 30  # segundos
-        
+        self.sensor_status = SensorStatus()  # Nuevo: rastrear estado individual
+
     async def get_sensor_data(self) -> Optional[dict]:
-        """Obtiene datos del sensor NodeMCU via HTTP"""
+        """
+        Obtiene datos del sensor NodeMCU via HTTP.
+        Retorna diccionario con los valores disponibles.
+        Marca como fallados solo los sensores específicos que no respondan.
+        """
         if not self.use_real_data or not self.nodemcu_ip:
+            self.sensor_status.temperatura_ok = False
+            self.sensor_status.humedad_ok = False
             return None
-            
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"http://{self.nodemcu_ip}/sensor", timeout=10) as response:
                     if response.status == 200:
                         data = await response.json()
+
+                        # Verificar cada sensor independientemente
+                        temp = data.get('temperatura')
+                        hum = data.get('humedad')
+
+                        # Marcar estado de cada sensor
+                        self.sensor_status.temperatura_ok = temp is not None
+                        self.sensor_status.humedad_ok = hum is not None
+
                         self.last_sensor_data = {
-                            'temperatura': data.get('temperatura'),
-                            'humedad': data.get('humedad'),
+                            'temperatura': temp,
+                            'humedad': hum,
                             'timestamp': datetime.now()
                         }
                         return self.last_sensor_data
+                    else:
+                        # NodeMCU respondió pero con error
+                        print(f"⚠️ NodeMCU respondió con status {response.status}")
+                        self.sensor_status.temperatura_ok = False
+                        self.sensor_status.humedad_ok = False
+                        return None
         except Exception as e:
-            print(f"Error al obtener datos del sensor: {e}")
+            print(f"⚠️ Error conectando al NodeMCU: {e}")
+            self.sensor_status.temperatura_ok = False
+            self.sensor_status.humedad_ok = False
             return None
-    
+
+    def get_sensor_status(self) -> SensorStatus:
+        """Retorna el estado actual de todos los sensores"""
+        return self.sensor_status
+
     def is_sensor_data_fresh(self) -> bool:
         """Verifica si los datos del sensor son recientes"""
         if not self.last_sensor_data:
@@ -59,12 +108,38 @@ sensor_manager = SensorDataManager(
     use_real_data=True
 )
 
-async def generar_datos_reales(session) -> AsyncGenerator[DatoMonitoreo, None]:
-    """Versión actualizada que usa datos reales del NodeMCU"""
+async def generar_datos_reales(session, strict_mode: bool = True) -> AsyncGenerator[Optional[DatoMonitoreo], None]:
+    """
+    Genera datos usando el sensor NodeMCU real con manejo independiente de sensores.
+
+    - Si el NodeMCU completo falla → No genera datos
+    - Si solo falla un sensor (ej: humedad) → Genera datos con los sensores que funcionan
+    - Cada sensor se monitorea independientemente
+
+    Args:
+        session: Sesión de base de datos
+        strict_mode: Si es True, no genera datos falsos
+
+    Yields:
+        DatoMonitoreo con datos de sensores disponibles, o None si NodeMCU completo falla
+    """
+    nodemcu_fallado_completamente = False
+
     while True:
         # Obtener datos del sensor
         sensor_data = await sensor_manager.get_sensor_data()
-        
+        sensor_status = sensor_manager.get_sensor_status()
+
+        # Verificar si el NodeMCU completo falló
+        if sensor_data is None:
+            nodemcu_fallado_completamente = True
+            yield None  # NodeMCU no responde en absoluto
+            await asyncio.sleep(5)
+            continue
+
+        # NodeMCU responde, pero algunos sensores pueden fallar
+        nodemcu_fallado_completamente = False
+
         # Filtrar solo productos con monitoreo activo
         stmt = (
             select(ProductoMonitoreado, CondicionAlmacenamiento)
@@ -72,34 +147,39 @@ async def generar_datos_reales(session) -> AsyncGenerator[DatoMonitoreo, None]:
             .join(CondicionAlmacenamiento, ProductoFarmaceutico.id_condicion == CondicionAlmacenamiento.id)
             .where(ProductoMonitoreado.fecha_finalizacion_monitoreo == None)
         )
-        
+
         result = session.exec(stmt)
         datos = result.all()
-        
+
         for pm, condicion in datos:
-            if sensor_data and sensor_manager.is_sensor_data_fresh():
-                # Usar datos reales del sensor
-                yield DatoMonitoreo(
-                    id_producto_monitoreado=pm.id,
-                    fecha=datetime.now(),
-                    temperatura=sensor_data['temperatura'],
-                    humedad=sensor_data['humedad'],
-                    # Para lux y presión, usar valores por defecto o simulados
-                    lux=random.uniform(condicion.lux_min, condicion.lux_max * 1.005),
-                    presion=random.uniform(condicion.presion_min, condicion.presion_max)
-                )
+            # Crear dato de monitoreo solo con sensores que funcionan
+            dato = DatoMonitoreo(
+                id_producto_monitoreado=pm.id,
+                fecha=datetime.now()
+            )
+
+            # Temperatura: solo si el sensor funciona
+            if sensor_status.temperatura_ok and sensor_data['temperatura'] is not None:
+                dato.temperatura = sensor_data['temperatura']
+            elif not strict_mode:
+                dato.temperatura = random.uniform(condicion.temperatura_min, condicion.temperatura_max * 1.005)
             else:
-                # Usar datos de respaldo si el sensor no está disponible
-                fallback_data = sensor_manager.generate_fallback_data(condicion)
-                yield DatoMonitoreo(
-                    id_producto_monitoreado=pm.id,
-                    fecha=datetime.now(),
-                    temperatura=fallback_data['temperatura'],
-                    humedad=fallback_data['humedad'],
-                    lux=fallback_data['lux'],
-                    presion=fallback_data['presion']
-                )
-        
+                dato.temperatura = condicion.temperatura_min  # Valor mínimo como indicador
+
+            # Humedad: solo si el sensor funciona
+            if sensor_status.humedad_ok and sensor_data['humedad'] is not None:
+                dato.humedad = sensor_data['humedad']
+            elif not strict_mode:
+                dato.humedad = random.uniform(condicion.humedad_min, condicion.humedad_max * 1.005)
+            else:
+                dato.humedad = condicion.humedad_min  # Valor mínimo como indicador
+
+            # Lux y presión: siempre simulados (no vienen del NodeMCU)
+            dato.lux = random.uniform(condicion.lux_min, condicion.lux_max * 1.005)
+            dato.presion = random.uniform(condicion.presion_min, condicion.presion_max)
+
+            yield dato
+
         await asyncio.sleep(5)
 
 # Función híbrida que permite alternar entre simulado y real

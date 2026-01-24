@@ -26,9 +26,9 @@ async def generar_datos_simulados(session) -> AsyncGenerator[DatoMonitoreo, None
             yield DatoMonitoreo(
                 id_producto_monitoreado=pm.id,
                 fecha=datetime.now(),
-                temperatura=random.uniform(condicion.temperatura_min, condicion.temperatura_max * 200.005),
-                humedad=random.uniform(condicion.humedad_min, condicion.humedad_max * 1.005),
-                lux=random.uniform(condicion.lux_min, condicion.lux_max * 1.005),
+                temperatura=random.uniform(condicion.temperatura_min, condicion.temperatura_max * 100.005),
+                humedad=random.uniform(condicion.humedad_min, condicion.humedad_max * 100.005),
+                lux=random.uniform(condicion.lux_min, condicion.lux_max * 100.005),
                 presion=random.uniform(condicion.presion_min, condicion.presion_max)
             )
         

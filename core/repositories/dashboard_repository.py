@@ -7,35 +7,32 @@ from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.registro import Registro
 
 def get_dashboard_metrics(session: Session):
-    def count_usuarios():
-        return session.exec(select(func.count()).select_from(Usuario)).one()
+    """Versión simple y confiable - ejecuta queries en secuencia"""
     
-    def count_productos():
-        return session.exec(select(func.count()).select_from(ProductoFarmaceutico)).one()
+    usuarios_registrados = session.exec(
+        select(func.count()).select_from(Usuario)
+    ).one()
     
-    def count_alertas_activas():
-        return session.exec(select(func.count()).where(Alerta.estado == EstadoAlerta.PENDIENTE).select_from(Alerta)).one()
+    productos_inventario = session.exec(
+        select(func.count()).select_from(ProductoFarmaceutico)
+    ).one()
     
-    def count_monitoreos_activos():
-        return session.exec(select(func.count()).where(ProductoMonitoreado.fecha_finalizacion_monitoreo == None)).one()
+    alertas_activas = session.exec(
+        select(func.count())
+        .where(Alerta.estado == EstadoAlerta.PENDIENTE)
+        .select_from(Alerta)
+    ).one()
     
-    from concurrent.futures import ThreadPoolExecutor
-    
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(count_usuarios),
-            executor.submit(count_productos),
-            executor.submit(count_alertas_activas),
-            executor.submit(count_monitoreos_activos)
-        ]
-        
-        results = [f.result() for f in futures]
+    monitoreos_activos = session.exec(
+        select(func.count())
+        .where(ProductoMonitoreado.fecha_finalizacion_monitoreo == None)
+    ).one()
     
     return {
-        "usuarios_registrados": results[0] or 0,
-        "productos_inventario": results[1] or 0,
-        "alertas_activas": results[2] or 0,
-        "monitoreos_activos": results[3] or 0
+        "usuarios_registrados": usuarios_registrados or 0,
+        "productos_inventario": productos_inventario or 0,
+        "alertas_activas": alertas_activas or 0,
+        "monitoreos_activos": monitoreos_activos or 0
     }
 
 

@@ -67,3 +67,4 @@ async def obtener_ultimos_usuarios(session: Session = Depends(get_session)):
             status_code=500,
             detail=f"Error recuperando últimos registros: {str(e)}"
         )
+
