@@ -128,21 +128,41 @@ async def on_startup():
     
     # Iniciar generación de datos de forma asíncrona
     asyncio.create_task(background_data_processing())
+    # Iniciar monitoreo de LED en tiempo real
+    asyncio.create_task(background_led_monitoring())
 
 async def background_data_processing():
-    """Procesamiento en background con sesiones independientes - Modo estricto activado"""
+    """Procesamiento en background para guardar datos en BD - Cada 60 segundos"""
     from adapters.db.sqlmodel_database import engine
-    from adapters.arduino_adapter import generar_datos_reales
+    from adapters.arduino_adapter import generar_datos_reales_definitivo
+    print("🚀 Iniciando procesamiento de datos (cada 60 segundos)")
+
     while True:
         try:
             with Session(engine) as session:
                 # Modo estricto: NO genera datos falsos cuando el sensor falla
-                datos_generador = generar_datos_reales(session, strict_mode=True)
+                datos_generador = generar_datos_reales_definitivo(session, strict_mode=True)
                 await procesar_datos(datos_generador, session)
             await asyncio.sleep(60)  # Procesar cada 60 segundos
         except Exception as e:
-            print(f"Error en procesamiento background: {e}")
+            print(f"❌ Error en procesamiento background: {e}")
             await asyncio.sleep(30)
+
+async def background_led_monitoring():
+    """Procesamiento en background para actualizar LED - Cada 5 segundos"""
+    from services.led_service import monitorear_y_actualizar_led
+    from adapters.db.sqlmodel_database import engine
+
+    print("🚀 Iniciando monitoreo de LED (cada 5 segundos)")
+
+    while True:
+        try:
+            with Session(engine) as session:
+                await monitorear_y_actualizar_led(session)
+            await asyncio.sleep(5)  # Actualizar LED cada 5 segundos
+        except Exception as e:
+            print(f"❌ Error en monitoreo de LED: {e}")
+            await asyncio.sleep(5)
 
 # Incluir routers
 app.include_router(usuario.router)
