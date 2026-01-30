@@ -13,13 +13,14 @@ def crear_alerta(session: Session, dato: DatoMonitoreo) -> List[Alerta]:
     # 1. Obtener relaciones necesarias
     producto_monitoreado = dato.productomonitoreado
     condicion = producto_monitoreado.producto.condicion
-    
+
     # 2. Verificar TODOS los parámetros fuera de rango
     parametros_problematicos = verificar_parametros(dato, condicion)
-    
+
     # 3. Cerrar alertas de parámetros que volvieron a la normalidad
-    cerrar_alertas_resueltas(session, producto_monitoreado.id, parametros_problematicos)
-    
+    # CERRADO PARA QUE LAS ALERTAS SE MANTENGAN PENDIENTES HASTA RESOLUCIÓN MANUAL
+    # cerrar_alertas_resueltas(session, producto_monitoreado.id, parametros_problematicos)
+
     alertas_generadas = []
     
     # 4. Procesar cada parámetro problemático

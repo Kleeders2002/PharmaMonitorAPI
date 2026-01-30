@@ -71,7 +71,8 @@ import asyncio
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, create_engine
-from adapters.api import usuario, auth, condicionalmacenamiento, uploadimage, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil
+from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil
+# uploadimage temporalmente deshabilitado - requiere cloudinary
 from adapters.db.sqlmodel_database import init_db, get_session
 from adapters.simulated_adapter import generar_datos_simulados
 from adapters.arduino_adapter import generar_datos_hibridos
@@ -135,7 +136,7 @@ async def background_data_processing():
     """Procesamiento en background para guardar datos en BD - Cada 60 segundos"""
     from adapters.db.sqlmodel_database import engine
     from adapters.arduino_adapter import generar_datos_reales_definitivo
-    print("🚀 Iniciando procesamiento de datos (cada 60 segundos)")
+    print("Iniciando procesamiento de datos (cada 60 segundos)")
 
     while True:
         try:
@@ -145,7 +146,7 @@ async def background_data_processing():
                 await procesar_datos(datos_generador, session)
             await asyncio.sleep(60)  # Procesar cada 60 segundos
         except Exception as e:
-            print(f"❌ Error en procesamiento background: {e}")
+            print(f"Error en procesamiento background: {e}")
             await asyncio.sleep(30)
 
 async def background_led_monitoring():
@@ -153,7 +154,7 @@ async def background_led_monitoring():
     from services.led_service import monitorear_y_actualizar_led
     from adapters.db.sqlmodel_database import engine
 
-    print("🚀 Iniciando monitoreo de LED (cada 5 segundos)")
+    print("Iniciando monitoreo de LED (cada 5 segundos)")
 
     while True:
         try:
@@ -161,7 +162,7 @@ async def background_led_monitoring():
                 await monitorear_y_actualizar_led(session)
             await asyncio.sleep(5)  # Actualizar LED cada 5 segundos
         except Exception as e:
-            print(f"❌ Error en monitoreo de LED: {e}")
+            print(f"Error en monitoreo de LED: {e}")
             await asyncio.sleep(5)
 
 # Incluir routers
@@ -174,6 +175,6 @@ app.include_router(productomonitoreado.router)
 app.include_router(datomonitoreo.router)
 app.include_router(formafarmaceutica.router)
 app.include_router(registro.router)
-app.include_router(uploadimage.router)
+# app.include_router(uploadimage.router)  # Temporalmente deshabilitado - requiere cloudinary
 app.include_router(auth.router)
 app.include_router(perfil.router)
