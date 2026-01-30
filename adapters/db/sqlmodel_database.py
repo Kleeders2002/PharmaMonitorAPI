@@ -1,13 +1,20 @@
 from sqlmodel import SQLModel, create_engine, Session
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 #DATABASE_URL = "postgresql://neondb_owner:npg_3ucRs2tijLMp@ep-autumn-morning-ad6m1upg-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
-DATABASE_URL = "postgresql://postgres:kleeders2002@localhost/PharmaMonitorDB"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:kleeders2002@localhost/PharmaMonitorDB"
+)
 
 # ✅ Configura el pool correctamente para peticiones concurrentes
 engine = create_engine(
     DATABASE_URL,
-    echo=True,  # Para ver los queries en consola
+    echo=False,  # Desactivado en producción
     pool_size=10,          # ⭐ Número de conexiones permanentes en el pool
     max_overflow=20,       # ⭐ Conexiones adicionales temporales
     pool_pre_ping=True,    # Verifica conexiones antes de usarlas

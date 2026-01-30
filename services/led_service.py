@@ -1,13 +1,18 @@
 import asyncio
 import aiohttp
+import os
+from dotenv import load_dotenv
 from sqlmodel import Session, select
 from core.models.alerta import Alerta
 from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.productofarmaceutico import ProductoFarmaceutico
 from core.models.productomonitoreado import ProductoMonitoreado
 
+# Cargar variables de entorno
+load_dotenv()
+
 # Configuración del NodeMCU
-NODEMCU_IP = "192.168.0.117"
+NODEMCU_IP = os.getenv("NODEMCU_IP", "192.168.0.117")
 NODEMCU_LED_URL = f"http://{NODEMCU_IP}/led"
 
 # Umbrales para amarillo (porcentaje del rango máximo)

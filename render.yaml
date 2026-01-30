@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pharmamonitor-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pharmamonitor-db
+          property: connectionString
+      - key: NODEMCU_IP
+        value: 192.168.0.117
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 8000
+
+databases:
+  - name: pharmamonitor-db
+    databaseName: pharmamonitor_db
+    user: pharmamonitor_user

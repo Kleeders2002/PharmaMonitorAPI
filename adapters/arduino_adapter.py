@@ -115,9 +115,14 @@ class SensorDataManager:
         }
 
 # Instancia global del gestor de sensores
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 sensor_manager = SensorDataManager(
-    nodemcu_ip="192.168.0.117", 
-    use_real_data=True
+    nodemcu_ip=os.getenv("NODEMCU_IP", "192.168.0.117"),
+    use_real_data=os.getenv("USE_REAL_SENSORS", "true").lower() == "true"
 )
 
 async def generar_datos_reales(session, strict_mode: bool = True) -> AsyncGenerator[Optional[DatoMonitoreo], None]:
