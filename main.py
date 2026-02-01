@@ -8,33 +8,14 @@ from core.models.formafarmaceutica import FormaFarmaceutica
 
 app = FastAPI()
 
-# Configuración de CORS
-# Leer allowed origins desde variable de entorno o usar defaults
-import os
-cors_origins = os.getenv("CORS_ORIGINS", "").split(",")
-
-# Si no hay variable configurada, usar defaults para desarrollo
-if not cors_origins or cors_origins == [""]:
-    cors_origins = [
-        "http://localhost:3000",    # React frontend
-        "http://localhost:19006",   # Expo web default
-        "http://localhost:8081",    # Expo web alternate
-        "http://localhost:19000",   # Expo web production
-        "http://192.168.0.155:19006",  # Expo web en red local
-        "http://192.168.0.155:8081",   # Expo web alternate en red
-        "exp://192.168.0.155:8081",    # Expo Go en móvil
-        "http://localhost:8000",        # Backend itself
-        "https://pharmamonitorapi.onrender.com",  # Backend en Render
-        "https://pharmamonitorweb.vercel.app",    # Frontend en Vercel
-    ]
-
+# Configuración de CORS - PERMITIR TODOS LOS ORIGENES
+# Esto permite peticiones desde cualquier sitio (NodeMCU, apps móviles, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Set-Cookie"],
+    allow_origins=["*"],           # Permitir cualquier origen
+    allow_credentials=False,       # False cuando se usa ["*"]
+    allow_methods=["*"],           # Permitir todos los métodos
+    allow_headers=["*"],           # Permitir todos los headers
 )
 
 def create_default_roles(session: Session):
