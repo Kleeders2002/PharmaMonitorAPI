@@ -15,12 +15,10 @@ services:
         value: 3.12.0
 
       # ============================================================
-      # DATABASE (Render conecta automáticamente)
+      # DATABASE (Tu base de datos existente en Render)
       # ============================================================
       - key: DATABASE_URL
-        fromDatabase:
-          name: pharmamonitor-db
-          property: connectionString
+        value: postgresql://pharmamonitor_user:Q7mLEREmysKkMKpb5xBF4afzhD9a7z8i@dpg-d5vahrili9vc73a3lea0-a.oregon-postgres.render.com/pharmamonitor_db
 
       # ============================================================
       # JWT SECRET (Render genera un valor seguro automáticamente)
@@ -60,13 +58,3 @@ services:
       # ============================================================
       - key: PORT
         value: 8000
-
-# ============================================================
-# DATABASE
-# ============================================================
-databases:
-  - name: pharmamonitor-db
-    databaseName: pharmamonitor_db
-    user: pharmamonitor_user
-    # PostgreSQL 15 (última versión estable)
-    postgresVersion: "15"
