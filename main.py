@@ -1,13 +1,9 @@
-import asyncio
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, create_engine
-from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil
+from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil, nodemcu
 # uploadimage temporalmente deshabilitado - requiere cloudinary
 from adapters.db.sqlmodel_database import init_db, get_session
-from adapters.simulated_adapter import generar_datos_simulados
-from adapters.arduino_adapter import generar_datos_hibridos
-from services.data_service import procesar_datos
 from core.models.rol import Rol
 from core.models.formafarmaceutica import FormaFarmaceutica
 
@@ -51,52 +47,16 @@ def create_default_formas(session: Session):
 @app.on_event("startup")
 async def on_startup():
     init_db()
-    
+
     # Crear datos iniciales con sesión dedicada
     from adapters.db.sqlmodel_database import engine
     with Session(engine) as session:
         create_default_roles(session)
         create_default_formas(session)
-    
-    # Iniciar generación de datos de forma asíncrona
-    asyncio.create_task(background_data_processing())
-    # Iniciar monitoreo de LED en tiempo real
-    asyncio.create_task(background_led_monitoring())
 
-async def background_data_processing():
-    """Procesamiento en background para guardar datos en BD - Cada 60 segundos"""
-    from adapters.db.sqlmodel_database import engine
-    from adapters.arduino_adapter import generar_datos_reales_definitivo
-    print("Iniciando procesamiento de datos (cada 60 segundos)")
-
-    while True:
-        try:
-            with Session(engine) as session:
-                # Modo estricto: NO genera datos falsos cuando el sensor falla
-                datos_generador = generar_datos_reales_definitivo(session, strict_mode=True)
-                await procesar_datos(datos_generador, session)
-            await asyncio.sleep(60)  # Procesar cada 60 segundos
-        except Exception as e:
-            print(f"Error en procesamiento background: {e}")
-            await asyncio.sleep(30)
-
-async def background_led_monitoring():
-    """Procesamiento en background para actualizar LED - Cada 5 segundos"""
-    from services.led_service import monitorear_y_actualizar_led
-    from adapters.db.sqlmodel_database import engine
-
-    print("Iniciando monitoreo de LED (cada 5 segundos)")
-
-    while True:
-        try:
-            with Session(engine) as session:
-                await monitorear_y_actualizar_led(session)
-            await asyncio.sleep(5)  # Actualizar LED cada 5 segundos
-        except Exception as e:
-            print(f"Error en monitoreo de LED: {e}")
-            await asyncio.sleep(5)
-
+    print("✅ Backend iniciado - Esperando datos del NodeMCU en POST /nodemcu/data")
 # Incluir routers
+app.include_router(nodemcu.router)
 app.include_router(usuario.router)
 app.include_router(dashboard.router)
 app.include_router(alerta.router)
