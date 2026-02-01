@@ -3,8 +3,8 @@ fastapi==0.112.1
 uvicorn[standard]==0.30.6
 sqlmodel==0.0.22
 
-# Database (compilar desde fuente para compatibilidad con Python 3.13)
-psycopg2-binary==2.9.9
+# Database (psycopg2-binary 2.9.10+ soporta Python 3.13)
+psycopg2-binary>=2.9.10
 
 # Authentication & Security
 python-jose[cryptography]==3.3.0
