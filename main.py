@@ -25,6 +25,7 @@ if not cors_origins or cors_origins == [""]:
         "http://192.168.0.155:8081",   # Expo web alternate en red
         "exp://192.168.0.155:8081",    # Expo Go en móvil
         "http://localhost:8000",        # Backend itself
+        "https://pharmamonitorapi.onrender.com",
     ]
 
 app.add_middleware(
