@@ -2,14 +2,18 @@ from sqlmodel import SQLModel, create_engine, Session
 import os
 from dotenv import load_dotenv
 
+# Cargar .env solo si existe (para desarrollo local)
 load_dotenv()
 
-#DATABASE_URL = "postgresql://neondb_owner:npg_3ucRs2tijLMp@ep-autumn-morning-ad6m1upg-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# DATABASE_URL es OBLIGATORIA en producción (Render la inyecta)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:kleeders2002@localhost/PharmaMonitorDB"
-)
+if not DATABASE_URL:
+    raise ValueError(
+        "❌ ERROR: DATABASE_URL no está configurada.\n"
+        "• En Render: Configúrala en render.yaml o en el dashboard\n"
+        "• En local: Crea un archivo .env con DATABASE_URL=..."
+    )
 
 # ✅ Configura el pool correctamente para peticiones concurrentes
 engine = create_engine(
