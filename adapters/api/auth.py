@@ -255,8 +255,17 @@ def verify_token(request: Request, grace_period: int = 0):
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key="access_token", path="/")
-    response.delete_cookie(key="refresh_token", path="/")
+    # Eliminar cookies con todos los parámetros necesarios
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        samesite="None"
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        path="/",
+        samesite="None"
+    )
     return {"message": "Logout exitoso"}
 
 

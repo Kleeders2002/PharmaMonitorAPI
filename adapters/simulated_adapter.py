@@ -7,6 +7,7 @@ from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.datomonitoreo import DatoMonitoreo
 from core.models.productofarmaceutico import ProductoFarmaceutico
+from core.utils.datetime_utils import get_caracas_now
 
 async def generar_datos_simulados(session) -> AsyncGenerator[DatoMonitoreo, None]:
     while True:
@@ -25,7 +26,7 @@ async def generar_datos_simulados(session) -> AsyncGenerator[DatoMonitoreo, None
             # Generar datos solo si el producto está activo
             yield DatoMonitoreo(
                 id_producto_monitoreado=pm.id,
-                fecha=datetime.now(),
+                fecha=get_caracas_now(),
                 temperatura=random.uniform(condicion.temperatura_min, condicion.temperatura_max * 100.005),
                 humedad=random.uniform(condicion.humedad_min, condicion.humedad_max * 100.005),
                 lux=random.uniform(condicion.lux_min, condicion.lux_max * 100.005),

@@ -7,6 +7,7 @@ from datetime import datetime
 from core.models.productofarmaceutico import ProductoFarmaceutico
 from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.condicionalmacenamiento import CondicionAlmacenamiento
+from core.utils.datetime_utils import get_caracas_now
 
 
 def procesar_datos_entrantes(
@@ -68,7 +69,7 @@ def procesar_datos_entrantes(
         'humedad': humedad,
         'lux': lux,
         'presion': presion,
-        'timestamp': datetime.now()
+        'timestamp': get_caracas_now()
     }
 
     # Verificar si NodeMCU está completamente fallado
@@ -100,7 +101,7 @@ def procesar_datos_entrantes(
         if temperatura is not None or humedad is not None or lux is not None or presion is not None:
             dato = DatoMonitoreo(
                 id_producto_monitoreado=pm.id,
-                fecha=datetime.now(),
+                fecha=get_caracas_now(),
                 temperatura=temperatura,
                 humedad=humedad,
                 lux=lux,

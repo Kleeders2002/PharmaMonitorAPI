@@ -16,6 +16,7 @@ from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.datomonitoreo import DatoMonitoreo
 from core.models.productofarmaceutico import ProductoFarmaceutico
+from core.utils.datetime_utils import get_caracas_now
 
 
 class SensorStatus:
@@ -85,7 +86,7 @@ class SensorDataManager:
                             'humedad': hum,
                             'lux': lux,
                             'presion': presion,
-                            'timestamp': datetime.now()
+                            'timestamp': get_caracas_now()
                         }
                         return self.last_sensor_data
                     else:
@@ -113,7 +114,7 @@ class SensorDataManager:
         if not self.last_sensor_data:
             return False
 
-        time_diff = datetime.now() - self.last_sensor_data['timestamp']
+        time_diff = get_caracas_now() - self.last_sensor_data['timestamp']
         return time_diff.total_seconds() < self.sensor_timeout
 
     def generate_fallback_data(self, condicion: CondicionAlmacenamiento) -> dict:

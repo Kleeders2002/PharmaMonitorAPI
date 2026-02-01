@@ -14,6 +14,7 @@ python-multipart==0.0.20
 
 # Environment
 python-dotenv==1.0.1
+tzdata==2024.2
 
 # HTTP Client (mantenido por compatibilidad, ya no se usa activamente)
 aiohttp==3.9.0

@@ -6,9 +6,10 @@ from core.models.productofarmaceutico import ProductoFarmaceutico
 from core.models.alerta import Alerta, EstadoAlerta
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime 
+from datetime import datetime
 from core.models.usuario import UserRead
 from core.ports.registro_port import RegistroPort
+from core.utils.datetime_utils import get_caracas_now
 import json
 
 def get_productos_monitoreados(session: Session):
@@ -84,7 +85,7 @@ def stop_producto_monitoreado(
     if producto:
         try:
             # 1. Actualizar fecha de finalización del producto
-            fecha_fin = datetime.utcnow()
+            fecha_fin = get_caracas_now()
             producto.fecha_finalizacion_monitoreo = fecha_fin
             
             # 2. Cerrar alertas asociadas pendientes

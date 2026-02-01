@@ -5,6 +5,7 @@ from core.models.alerta import Alerta, EstadoAlerta
 from core.models.datomonitoreo import DatoMonitoreo
 from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.productomonitoreado import ProductoMonitoreado
+from core.utils.datetime_utils import get_caracas_now
 
 def get_alertas(session: Session):
     return session.exec(select(Alerta)).all()
@@ -35,7 +36,7 @@ def crear_alerta(session: Session, dato: DatoMonitoreo) -> List[Alerta]:
         if alerta_existente:
             # Actualizar duración de alerta existente
             alerta_existente.duracion_minutos = (
-                datetime.now() - alerta_existente.fecha_generacion
+                get_caracas_now() - alerta_existente.fecha_generacion
             ).total_seconds() / 60
             session.commit()
             alertas_generadas.append(alerta_existente)
@@ -50,7 +51,7 @@ def crear_alerta(session: Session, dato: DatoMonitoreo) -> List[Alerta]:
                 limite_min=getattr(condicion, f"{parametro}_min"),
                 limite_max=getattr(condicion, f"{parametro}_max"),
                 mensaje=f"¡Alerta! {parametro.capitalize()} fuera de rango",
-                fecha_generacion=datetime.now(),
+                fecha_generacion=get_caracas_now(),
                 estado=EstadoAlerta.PENDIENTE
             )
             session.add(nueva_alerta)
@@ -75,9 +76,9 @@ def cerrar_alertas_resueltas(
     
     for alerta in alertas_a_cerrar:
         alerta.estado = EstadoAlerta.RESUELTA
-        alerta.fecha_resolucion = datetime.now()
+        alerta.fecha_resolucion = get_caracas_now()
         alerta.duracion_minutos = (
-            datetime.now() - alerta.fecha_generacion
+            get_caracas_now() - alerta.fecha_generacion
         ).total_seconds() / 60
     
     session.commit()
@@ -154,7 +155,7 @@ def crear_alerta_sensor_no_disponible(session: Session, sensores_fallidos: list[
                     limite_min=0.0,
                     limite_max=0.0,
                     mensaje=mensaje,
-                    fecha_generacion=datetime.now(),
+                    fecha_generacion=get_caracas_now(),
                     estado=EstadoAlerta.PENDIENTE
                 )
                 session.add(nueva_alerta)
@@ -185,7 +186,7 @@ def crear_alerta_sensor_no_disponible(session: Session, sensores_fallidos: list[
                         limite_min=getattr(condicion, f"{sensor}_min") if hasattr(condicion, f"{sensor}_min") else 0.0,
                         limite_max=getattr(condicion, f"{sensor}_max") if hasattr(condicion, f"{sensor}_max") else 0.0,
                         mensaje=mensaje,
-                        fecha_generacion=datetime.now(),
+                        fecha_generacion=get_caracas_now(),
                         estado=EstadoAlerta.PENDIENTE
                     )
                     session.add(nueva_alerta)
@@ -223,7 +224,7 @@ def crear_alerta_sensor_no_disponible(session: Session, sensores_fallidos: list[
         if alerta_existente:
             # Actualizar duración
             alerta_existente.duracion_minutos = (
-                datetime.now() - alerta_existente.fecha_generacion
+                get_caracas_now() - alerta_existente.fecha_generacion
             ).total_seconds() / 60
             session.commit()
             alertas_creadas.append(alerta_existente)
@@ -239,7 +240,7 @@ def crear_alerta_sensor_no_disponible(session: Session, sensores_fallidos: list[
                 limite_min=0.0,
                 limite_max=0.0,
                 mensaje=mensaje,
-                fecha_generacion=datetime.now(),
+                fecha_generacion=get_caracas_now(),
                 estado=EstadoAlerta.PENDIENTE
             )
             session.add(nueva_alerta)
@@ -263,9 +264,9 @@ def cerrar_alerta_sensor_no_disponible(session: Session) -> int:
     count = 0
     for alerta in alertas_a_cerrar:
         alerta.estado = EstadoAlerta.RESUELTA
-        alerta.fecha_resolucion = datetime.now()
+        alerta.fecha_resolucion = get_caracas_now()
         alerta.duracion_minutos = (
-            datetime.now() - alerta.fecha_generacion
+            get_caracas_now() - alerta.fecha_generacion
         ).total_seconds() / 60
         alerta.mensaje = "✅ Sensor NodeMCU restaurado - Monitoreo normal"
         count += 1

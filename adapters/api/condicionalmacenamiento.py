@@ -14,6 +14,7 @@ from core.repositories.condicion_almacenamiento_repository import (
     update_condicion,
     delete_condicion
 )
+from core.utils.datetime_utils import get_caracas_now
 
 router = APIRouter()
 
@@ -56,7 +57,7 @@ def actualizar_condicion(
     condicion.presion_max = condicion_actualizada.presion_max
 
     # Actualizar fecha automáticamente
-    condicion.fecha_actualizacion = datetime.utcnow()
+    condicion.fecha_actualizacion = get_caracas_now()
 
     return update_condicion(session, condicion, Registro, current_user)
 

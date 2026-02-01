@@ -1,11 +1,15 @@
 import os
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
 # Cargar variables de entorno
 load_dotenv()
 
 class Config:
     """Configuración centralizada de la aplicación"""
+
+    # Timezone Configuration
+    TIMEZONE = ZoneInfo("America/Caracas")  # UTC-4
 
     # Database
     DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:kleeders2002@localhost/PharmaMonitorDB")

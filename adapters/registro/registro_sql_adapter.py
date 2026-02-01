@@ -3,6 +3,7 @@ from sqlmodel import Session
 from core.models.registro import Registro
 from core.ports.registro_port import RegistroPort
 from datetime import datetime
+from core.utils.datetime_utils import get_caracas_now
 
 class RegistroSQLAdapter(RegistroPort):
     def __init__(self, session: Session):
@@ -26,6 +27,6 @@ class RegistroSQLAdapter(RegistroPort):
             entidad_afectada=entidad,
             id_entidad=entidad_id,
             detalles=detalles,
-            fecha=datetime.utcnow()
+            fecha=get_caracas_now()
         )
         self.session.add(nuevo_registro)  # Accede al session de la instancia
