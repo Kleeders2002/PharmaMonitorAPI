@@ -25,6 +25,10 @@ def create_usuario(
     registro: RegistroPort,
     current_user: UserRead
 ):
+    # Hashear contraseña ANTES de guardar en BD (seguridad)
+    if usuario.password and not usuario.password.startswith("$2b$"):
+        usuario.password = pwd_context.hash(usuario.password)
+
     session.add(usuario)
     session.commit()
     session.refresh(usuario)
