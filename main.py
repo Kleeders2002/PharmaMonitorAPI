@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from sqlmodel import Session, select, create_engine
 from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil, nodemcu, uploadimage
 from adapters.db.sqlmodel_database import init_db, get_session
@@ -9,35 +8,15 @@ from core.models.formafarmaceutica import FormaFarmaceutica
 
 app = FastAPI()
 
-# Middleware personalizado para CORS con wildcard + credenciales
-class AllowAllOriginsMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
-
-        # Obtener el origen de la petición
-        origin = request.headers.get("origin")
-
-        # Si hay origen, agregarlo a Access-Control-Allow-Origin
-        if origin:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-
-        # Manejar preflight requests
-        if request.method == "OPTIONS":
-            response = Response()
-            if origin:
-                response.headers["Access-Control-Allow-Origin"] = origin
-                response.headers["Access-Control-Allow-Credentials"] = "true"
-                response.headers["Access-Control-Allow-Methods"] = "*"
-                response.headers["Access-Control-Allow-Headers"] = "*"
-                response.headers["Access-Control-Max-Age"] = "86400"
-
-        return response
-
-# Agregar middleware personalizado ANTES que el de CORS
-app.add_middleware(AllowAllOriginsMiddleware)
+# Configuración de CORS - Permite cualquier origen con credenciales
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 def create_default_roles(session: Session):
     roles = ["Administrador", "Usuario"]
