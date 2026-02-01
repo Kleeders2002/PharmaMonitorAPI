@@ -4,40 +4,68 @@ services:
     runtime: python
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    # Variables de entorno configuradas automáticamente
     envVars:
-      # Python version
+      # ============================================================
+      # PYTHON VERSION
+      # ============================================================
       - key: PYTHON_VERSION
         value: 3.11.0
 
-      # Database (automatically configured by Render)
+      # ============================================================
+      # DATABASE (Render conecta automáticamente)
+      # ============================================================
       - key: DATABASE_URL
         fromDatabase:
           name: pharmamonitor-db
           property: connectionString
 
-      # JWT Secret (generate a secure value in production!)
+      # ============================================================
+      # JWT SECRET (Render genera un valor seguro automáticamente)
+      # ============================================================
       - key: JWT_SECRET
         generateValue: true
-        sync: false  # Don't overwrite if manually set
+        sync: false  # No sobreescribir si se configura manualmente después
 
-      # NodeMCU Configuration (NEW ARCHITECTURE)
-      # Already NOT needed - NodeMCU sends data to backend
+      # ============================================================
+      # NODEMCU CONFIGURATION (NUEVA ARQUITECTURA)
+      # ============================================================
       - key: USE_REAL_SENSORS
         value: true
+
       - key: SENSOR_STRICT_MODE
         value: true
 
-      # Environment
+      # ============================================================
+      # ENVIRONMENT
+      # ============================================================
       - key: ENVIRONMENT
         value: production
 
-      # Port (Render sets this automatically)
+      # ============================================================
+      # CORS ORIGINS (IMPORTANTE: Actualizar con tu frontend real)
+      # ============================================================
+      # Ejemplo para desarrollo (comenta en producción):
+      - key: CORS_ORIGINS
+        value: http://localhost:3000,http://localhost:19006,http://localhost:8081
+
+      # Ejemplo para producción (descomenta cuando tengas frontend):
+      # - key: CORS_ORIGINS
+      #   value: https://pharmamonitor-frontend.onrender.com,https://tu-front-end.com
+
+      # ============================================================
+      # PORT (Render lo asigna automáticamente)
+      # ============================================================
       - key: PORT
         value: 8000
 
+# ============================================================
+# DATABASE
+# ============================================================
 databases:
   - name: pharmamonitor-db
     databaseName: pharmamonitor_db
     user: pharmamonitor_user
-    # PostgreSQL 15 (latest stable version)
+    # PostgreSQL 15 (última versión estable)
     postgresVersion: "15"
