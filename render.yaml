@@ -2,19 +2,36 @@ services:
   - type: web
     name: pharmamonitor-api
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Python version
       - key: PYTHON_VERSION
-        value: 3.9.0
+        value: 3.11.0
+
+      # Database (automatically configured by Render)
       - key: DATABASE_URL
         fromDatabase:
           name: pharmamonitor-db
           property: connectionString
-      - key: NODEMCU_IP
-        value: 192.168.0.117
+
+      # JWT Secret (generate a secure value in production!)
       - key: JWT_SECRET
         generateValue: true
+        sync: false  # Don't overwrite if manually set
+
+      # NodeMCU Configuration (NEW ARCHITECTURE)
+      # Already NOT needed - NodeMCU sends data to backend
+      - key: USE_REAL_SENSORS
+        value: true
+      - key: SENSOR_STRICT_MODE
+        value: true
+
+      # Environment
+      - key: ENVIRONMENT
+        value: production
+
+      # Port (Render sets this automatically)
       - key: PORT
         value: 8000
 
@@ -22,3 +39,5 @@ databases:
   - name: pharmamonitor-db
     databaseName: pharmamonitor_db
     user: pharmamonitor_user
+    # PostgreSQL 15 (latest stable version)
+    postgresVersion: "15"
