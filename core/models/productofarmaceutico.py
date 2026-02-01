@@ -22,17 +22,3 @@ class ProductoFarmaceutico(SQLModel, table=True):
     condicion: Optional["CondicionAlmacenamiento"] = Relationship(back_populates="productos")
     productos_monitoreados: List["ProductoMonitoreado"] = Relationship(back_populates="producto")
     formafarmaceutica: Optional["FormaFarmaceutica"] = Relationship(back_populates="productos")
-
-# class ProductoFarmaceuticoRead(SQLModel):
-#     id: Optional[int]
-#     id_forma_farmaceutica: int
-#     id_condicion: int
-#     nombre: str
-#     formula: str
-#     concentracion: str
-#     indicaciones: str
-#     contraindicaciones: str
-#     efectos_secundarios: str
-#     foto: Optional[str]
-#     condicion: Optional["CondicionAlmacenamiento"]
-#     formafarmaceutica: Optional["FormaFarmaceutica"]

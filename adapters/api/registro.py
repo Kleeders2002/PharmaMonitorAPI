@@ -4,8 +4,6 @@ from core.models.registro import Registro
 from core.repositories.registro_repository import (
     get_registros
 )
-# from core.utils.utils_auth import generate_reset_token, validate_reset_token  # Para el token
-
 
 router = APIRouter()
 

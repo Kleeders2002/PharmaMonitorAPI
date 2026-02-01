@@ -120,21 +120,3 @@ def delete_condicion(
     )
     
     session.commit()
-
-
-# Antes de los Registros
-
-# def create_condicion(session: Session, condicion: CondicionAlmacenamiento):
-#     session.add(condicion)
-#     session.commit()
-#     session.refresh(condicion)
-#     return condicion
-
-# def update_condicion(session: Session, condicion: CondicionAlmacenamiento):
-#     session.commit()
-#     session.refresh(condicion)
-#     return condicion
-
-# def delete_condicion(session: Session, condicion: CondicionAlmacenamiento):
-#     session.delete(condicion)
-#     session.commit()

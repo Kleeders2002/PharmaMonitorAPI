@@ -208,13 +208,6 @@ async def monitorear_y_actualizar_led(session: Session):
     # Log para debug
     print(f"🎨 Color LED decidido: {color.upper()} | modo_alerta_activo: {modo_alerta_activo}")
 
-    # Para probar colores manualmente, comenta la línea de arriba
-    # y descomenta una de estas:
-    # color = "rojo"      # Forzar ROJO
-    # color = "amarillo"  # Forzar AMARILLO
-    # color = "verde"     # Forzar VERDE
-    # color = "apagar"    # Forzar APAGAR
-
     await enviar_instruccion_led(color)
 
 

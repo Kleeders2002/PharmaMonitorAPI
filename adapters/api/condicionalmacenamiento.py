@@ -6,7 +6,7 @@ from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.condicionalmacenamientoconrelacion import CondicionAlmacenamientoConRelacion
 from core.models.usuario import UserRead
 from core.ports.registro_port import RegistroPort
-from dependencies import get_registro
+from dependencies import get_registro, get_current_user
 from core.repositories.condicion_almacenamiento_repository import (
     get_condiciones,
     get_condicion_by_id,
@@ -15,16 +15,11 @@ from core.repositories.condicion_almacenamiento_repository import (
     delete_condicion
 )
 
-
-from dependencies import get_current_user  # Asegúrate que la ruta sea correcta
-
 router = APIRouter()
 
 @router.get("/condiciones/", response_model=list[CondicionAlmacenamientoConRelacion])
 def listar_condiciones(session: Session = Depends(get_session)):
-    return get_condiciones(session) 
-
-
+    return get_condiciones(session)
 
 @router.get("/condiciones/{id}", response_model=CondicionAlmacenamiento)
 def obtener_condicion(id: int, session: Session = Depends(get_session)):
@@ -36,8 +31,6 @@ def obtener_condicion(id: int, session: Session = Depends(get_session)):
 @router.post("/condiciones/")
 def crear_condicion(condicion: CondicionAlmacenamiento, session: Session = Depends(get_session), Registro: RegistroPort = Depends(get_registro), current_user: UserRead = Depends(get_current_user)):
     return create_condicion(session, condicion, Registro, current_user)
-
-
 
 @router.put("/condiciones/{id}", response_model=CondicionAlmacenamiento)
 def actualizar_condicion(
@@ -61,14 +54,11 @@ def actualizar_condicion(
     condicion.lux_max = condicion_actualizada.lux_max
     condicion.presion_min = condicion_actualizada.presion_min
     condicion.presion_max = condicion_actualizada.presion_max
-    
+
     # Actualizar fecha automáticamente
     condicion.fecha_actualizacion = datetime.utcnow()
 
     return update_condicion(session, condicion, Registro, current_user)
-
-
-
 
 @router.delete("/condiciones/{id}")
 def eliminar_condicion(
@@ -82,50 +72,3 @@ def eliminar_condicion(
         raise HTTPException(status_code=404, detail="Condición no encontrada")
     delete_condicion(session, condicion, Registro, current_user)
     return {"detail": "Condición eliminada exitosamente"}
-
-
-
-# Antes de los Registros
-
-# @router.post("/condiciones/", response_model=CondicionAlmacenamiento)
-# def crear_condicion(condicion: CondicionAlmacenamiento, session: Session = Depends(get_session)):
-#     return create_condicion(session, condicion)
-
-
-
-# @router.put("/condiciones/{id}", response_model=CondicionAlmacenamiento)
-# def actualizar_condicion(
-#     id: int,
-#     condicion_actualizada: CondicionAlmacenamiento,
-#     session=Depends(get_session)
-# ):
-#     condicion = get_condicion_by_id(session, id)
-#     if not condicion:
-#         raise HTTPException(status_code=404, detail="Condición no encontrada")
-
-#     # Actualizar campos editables
-#     condicion.nombre = condicion_actualizada.nombre
-#     condicion.temperatura_min = condicion_actualizada.temperatura_min
-#     condicion.temperatura_max = condicion_actualizada.temperatura_max
-#     condicion.humedad_min = condicion_actualizada.humedad_min
-#     condicion.humedad_max = condicion_actualizada.humedad_max
-#     condicion.lux_min = condicion_actualizada.lux_min
-#     condicion.lux_max = condicion_actualizada.lux_max
-#     condicion.presion_min = condicion_actualizada.presion_min
-#     condicion.presion_max = condicion_actualizada.presion_max
-    
-#     # Actualizar fecha automáticamente
-#     condicion.fecha_actualizacion = datetime.utcnow()
-
-#     return update_condicion(session, condicion)
-
-
-
-
-# @router.delete("/condiciones/{id}")
-# def eliminar_condicion(id: int, session: Session = Depends(get_session)):
-#     condicion = get_condicion_by_id(session, id)
-#     if not condicion:
-#         raise HTTPException(status_code=404, detail="Condición no encontrada")
-#     delete_condicion(session, condicion)
-#     return {"detail": "Condición eliminada exitosamente"}

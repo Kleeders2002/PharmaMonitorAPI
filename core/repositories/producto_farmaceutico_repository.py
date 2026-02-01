@@ -48,19 +48,6 @@ def get_productos(session: Session):
     return productos_read
 
 
-
-
-# def get_producto_by_id(session: Session, id: int) -> ProductoFarmaceutico:
-#     producto = session.exec(
-#         select(ProductoFarmaceutico)
-#         .where(ProductoFarmaceutico.id == id)
-#         .options(
-#             selectinload(ProductoFarmaceutico.condicion),
-#             selectinload(ProductoFarmaceutico.formafarmaceutica)
-#         )
-#     ).first()
-#     return producto
-
 def get_producto_by_id(session: Session, id: int):
     return session.get(ProductoFarmaceutico, id)
 
@@ -178,21 +165,3 @@ def delete_producto(
     )
     
     session.commit()
-
-
-# Antes de los registros
-
-# def create_producto(session: Session, producto: ProductoFarmaceutico):
-#     session.add(producto)
-#     session.commit()
-#     session.refresh(producto)
-#     return producto
-
-# def update_producto(session: Session, producto: ProductoFarmaceutico):
-#     session.commit()
-#     session.refresh(producto)
-#     return producto
-
-# def delete_producto(session: Session, producto: ProductoFarmaceutico):
-#     session.delete(producto)
-#     session.commit()

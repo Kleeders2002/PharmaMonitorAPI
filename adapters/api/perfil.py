@@ -13,8 +13,6 @@ from core.repositories.perfil_repository import (
 
 from schemas.squemas import ChangePasswordRequest
 
-# from core.utils.utils_auth import generate_reset_token, validate_reset_token  # Para el token
-
 router = APIRouter()
 
 @router.get("/perfil", response_model=UserRead)
@@ -46,8 +44,6 @@ def actualizar_perfil(
     
     # Llamamos a la función del repositorio para actualizar y registrar la operación.
     return update_perfil(session, usuario, registro, current_user, usuario_original)
-    # usuario_actualizado_db = update_perfil(session, usuario, registro, current_user, usuario_original)
-    # return UserRead.from_orm(usuario_actualizado_db)  # Conversión a UserRead
 
 @router.put("/perfil/password", response_model=Usuario)
 def cambiar_contrasena(
@@ -64,30 +60,9 @@ def cambiar_contrasena(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     return update_usuario_password(
-        session, 
-        usuario, 
+        session,
+        usuario,
         request.new_password,
         registro,
         current_user
     )
-
-
-# @router.put("/usuarios/{id}/cambiar_contrasena", response_model=Usuario)
-# def cambiar_contrasena(
-#     id: int,
-#     request: ChangePasswordRequest,
-#     session: Session = Depends(get_session),
-#     registro: RegistroPort = Depends(get_registro),
-#     current_user: UserRead = Depends(get_current_user)
-# ):
-#     usuario = get_usuario_by_id(session, id)
-#     if not usuario:
-#         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-#     return update_usuario_password(
-#         session, 
-#         usuario, 
-#         request.new_password,
-#         registro,
-#         current_user
-#     )
