@@ -1,8 +1,9 @@
 services:
   - type: web
     name: pharmamonitor-api
-    # IMPORTANTE: Especificar Python 3.11 (compatible con todas las librerías)
-    runtime: "python@3.11"
+    # IMPORTANTE: Python 3.12 es más compatible que 3.13
+    runtime: python
+    pythonVersion: 3.12
 
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT

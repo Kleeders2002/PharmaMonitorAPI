@@ -3,7 +3,7 @@ fastapi==0.112.1
 uvicorn[standard]==0.30.6
 sqlmodel==0.0.22
 
-# Database
+# Database (psycopg2 compila desde fuente, compatible con Python 3.13+)
 psycopg2-binary==2.9.9
 
 # Authentication & Security
