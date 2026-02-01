@@ -112,15 +112,21 @@ def login(data: LoginData, response: Response, session=Depends(get_session)):
     )
     
     response.set_cookie(
-        key="refresh_token", 
+        key="refresh_token",
         value=f"Bearer {refresh_token}",
         httponly=True,
         secure=True,
         samesite="None",
         max_age=7 * 24 * 60 * 60
     )
-    
-    return {"message": "Login exitoso", "user": usuario}
+
+    return {
+        "message": "Login exitoso",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": usuario
+    }
 
 
 @router.post("/refresh-token")
