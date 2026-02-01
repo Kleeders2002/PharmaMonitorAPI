@@ -9,7 +9,7 @@ psycopg2>=2.9.0
 
 # Authentication & Security
 python-jose[cryptography]==3.3.0
-passlib==1.8.0
+passlib[bcrypt]==1.7.4
 python-multipart==0.0.20
 
 # Environment
@@ -62,7 +62,7 @@ pycparser==3.0
 # aiohttp dependencies
 aiohappyeyeballs==2.6.1
 aiosignal==1.4.0
-# passlib[bcrypt] dependency
-bcrypt==5.0.0
+# passlib[bcrypt] dependency (compatible con passlib 1.7.4)
+bcrypt==4.2.1
 # email-validator dependencies
 typing-extensions==4.12.2
