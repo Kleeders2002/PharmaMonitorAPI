@@ -1,18 +1,14 @@
 services:
   - type: web
     name: pharmamonitor-api
-    runtime: python
+    # IMPORTANTE: Especificar Python 3.11 (compatible con todas las librerías)
+    runtime: "python@3.11"
+
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
 
     # Variables de entorno configuradas automáticamente
     envVars:
-      # ============================================================
-      # PYTHON VERSION
-      # ============================================================
-      - key: PYTHON_VERSION
-        value: 3.11.0
-
       # ============================================================
       # DATABASE (Render conecta automáticamente)
       # ============================================================
