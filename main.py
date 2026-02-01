@@ -10,9 +10,13 @@ from core.models.formafarmaceutica import FormaFarmaceutica
 app = FastAPI()
 
 # Configuración de CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# Leer allowed origins desde variable de entorno o usar defaults
+import os
+cors_origins = os.getenv("CORS_ORIGINS", "").split(",")
+
+# Si no hay variable configurada, usar defaults para desarrollo
+if not cors_origins or cors_origins == [""]:
+    cors_origins = [
         "http://localhost:3000",    # React frontend
         "http://localhost:19006",   # Expo web default
         "http://localhost:8081",    # Expo web alternate
@@ -21,7 +25,11 @@ app.add_middleware(
         "http://192.168.0.155:8081",   # Expo web alternate en red
         "exp://192.168.0.155:8081",    # Expo Go en móvil
         "http://localhost:8000",        # Backend itself
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
