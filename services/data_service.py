@@ -85,7 +85,7 @@ def procesar_datos_entrantes(
         print(f"⚠️ Sensores fallados detectados: {sensores_fallados}")
         alerta_repository.crear_alerta_sensor_no_disponible(session, sensores_fallidos=sensores_fallados)
 
-    # Obtener productos con monitoreo activo
+    # Obtener el producto con monitoreo activo (solo puede existir uno)
     stmt = (
         select(ProductoMonitoreado, CondicionAlmacenamiento)
         .join(ProductoFarmaceutico, ProductoMonitoreado.id_producto == ProductoFarmaceutico.id)
@@ -93,26 +93,31 @@ def procesar_datos_entrantes(
         .where(ProductoMonitoreado.fecha_finalizacion_monitoreo == None)
     )
 
-    productos = session.exec(stmt).all()
+    producto_activo = session.exec(stmt).first()
 
-    # Crear datos de monitoreo para cada producto activo
-    for pm, condicion in productos:
-        # Solo guardar si hay al menos un sensor con datos
-        if temperatura is not None or humedad is not None or lux is not None or presion is not None:
-            dato = DatoMonitoreo(
-                id_producto_monitoreado=pm.id,
-                fecha=get_caracas_now(),
-                temperatura=temperatura,
-                humedad=humedad,
-                lux=lux,
-                presion=presion
-            )
+    # Si no hay producto activo, no procesar los datos (pero no es un error)
+    if not producto_activo:
+        logger.warning("⚠️ No hay producto con monitoreo activo. Los datos del NodeMCU no serán guardados.")
+        return [], sensores_fallados
 
-            # Guardar en BD
-            db_dato = dato_monitoreo_repository.create_dato_monitoreo(session, dato)
-            datos_guardados.append(db_dato)
+    pm, condicion = producto_activo
 
-            # Generar alertas si valores están fuera de rango
-            alerta_repository.crear_alerta(session, db_dato)
+    # Solo guardar si hay al menos un sensor con datos
+    if temperatura is not None or humedad is not None or lux is not None or presion is not None:
+        dato = DatoMonitoreo(
+            id_producto_monitoreado=pm.id,
+            fecha=get_caracas_now(),
+            temperatura=temperatura,
+            humedad=humedad,
+            lux=lux,
+            presion=presion
+        )
+
+        # Guardar en BD
+        db_dato = dato_monitoreo_repository.create_dato_monitoreo(session, dato)
+        datos_guardados.append(db_dato)
+
+        # Generar alertas si valores están fuera de rango
+        alerta_repository.crear_alerta(session, db_dato)
 
     return datos_guardados, sensores_fallados

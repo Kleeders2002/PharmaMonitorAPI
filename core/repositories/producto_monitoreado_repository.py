@@ -43,6 +43,32 @@ def create_producto_monitoreado(
     registro: RegistroPort,
     current_user: UserRead
 ):
+    # Validar que no exista un producto monitoreado activo
+    # Un producto está activo si su fecha_finalizacion_monitoreo es None
+    stmt = select(ProductoMonitoreado).where(
+        ProductoMonitoreado.fecha_finalizacion_monitoreo == None
+    )
+    producto_activo = session.exec(stmt).first()
+
+    if producto_activo:
+        # Ya existe un producto con monitoreo activo
+        nombre_producto_activo = (
+            producto_activo.producto.nombre
+            if producto_activo.producto
+            else "Producto Desconocido"
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "producto_activo_existe",
+                "message": f"Ya existe un producto en monitoreo activo: '{nombre_producto_activo}' (ID: {producto_activo.id}). "
+                          f"Solo se puede monitorear un producto a la vez. "
+                          f"Detén el monitoreo actual antes de comenzar uno nuevo.",
+                "producto_activo_id": producto_activo.id,
+                "producto_activo_nombre": nombre_producto_activo
+            }
+        )
+
     session.add(producto_monitoreado)
     session.commit()
     session.refresh(producto_monitoreado)
