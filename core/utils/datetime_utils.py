@@ -18,17 +18,20 @@ def get_caracas_now() -> datetime:
     Obtiene la fecha y hora actual en Caracas, Venezuela.
 
     Returns:
-        datetime: Fecha/hora actual con timezone de Venezuela (UTC-4)
+        datetime: Fecha/hora actual en Venezuela (UTC-4)
+        Simplemente resta 4 horas a la hora UTC.
 
     Example:
         >>> from core.utils.datetime_utils import get_caracas_now
         >>> ahora = get_caracas_now()
         >>> print(ahora)
-        2025-02-01 19:14:30-04:00
+        2025-02-01 19:14:30
     """
     # Obtener hora UTC y restar 4 horas
-    utc_now = datetime.now(timezone.utc)
-    return utc_now.astimezone(VENEZUELA_TZ)
+    from datetime import timedelta
+    utc_now = datetime.utcnow()
+    caracas_now = utc_now - timedelta(hours=4)
+    return caracas_now
 
 
 def ensure_caracas_timezone(dt: datetime) -> datetime:
