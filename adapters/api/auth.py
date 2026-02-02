@@ -173,69 +173,28 @@ def refresh_token(request: Request, response: Response, session=Depends(get_sess
         raise HTTPException(status_code=401, detail="Refresh token inválido")
 
 
-# Modifica el endpoint /check-auth para incluir la sesión
+# Endpoint /check-auth SIMPLIFICADO - Solo verifica autenticación, NO renueva tokens
 @router.get("/check-auth")
 async def check_auth(
     request: Request,
     response: Response,
     session: Session = Depends(get_session)
 ):
+    """
+    Verifica si el usuario está autenticado.
+    IMPORTANTE: Este endpoint NO renueva tokens automáticamente.
+    La renovación de tokens debe ser explícita mediante /silent-renew.
+    Esto evita que después de un logout, el check-auth renueve el token
+    basándose en un refresh token residual.
+    """
     try:
-        # 1. Intentar obtener usuario con el token actual
+        # Intentar obtener usuario con el access token actual
         user_data = get_current_user(request)
         return {"authenticated": True, "user": user_data}
-    
+
     except HTTPException as e:
-        # 2. Si el token está expirado, intentar renovar
-        if "expirado" in e.detail.lower():
-            try:
-                refresh_token = request.cookies.get("refresh_token")
-                if not refresh_token:
-                    raise HTTPException(status_code=401, detail="Refresh token requerido")
-                
-                # 3. Validar refresh token
-                token = refresh_token.replace("Bearer ", "").strip()
-                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-                usuario = session.get(Usuario, payload["sub"])
-                
-                if not usuario:
-                    raise HTTPException(status_code=404, detail="Usuario no encontrado")
-                
-                # 4. Generar NUEVO access token
-                new_access_token = create_access_token({
-                    "sub": usuario.email,
-                    "id": usuario.idusuario,
-                    "rol": usuario.idrol
-                })
-                
-                # 5. Actualizar cookies
-                response.set_cookie(
-                    key="access_token",
-                    value=f"Bearer {new_access_token}",
-                    httponly=True,
-                    secure=True,
-                    samesite="Lax",
-                    max_age=900  # 15 minutos
-                )
-                
-                return {
-                    "authenticated": True,
-                    "user": {
-                        "sub": usuario.email,
-                        "rol": usuario.idrol,
-                        "id": usuario.idusuario
-                    }
-                }
-            
-            except jwt.ExpiredSignatureError:
-                response.delete_cookie("access_token")
-                response.delete_cookie("refresh_token")
-                return {"authenticated": False}
-            
-            except Exception as e:
-                print(f"Error en renovación: {str(e)}")
-                return {"authenticated": False}
-        
+        # NO renovar automáticamente, solo retornar no autenticado
+        # Si el token expiró, el frontend debe llamar explícitamente a /silent-renew
         return {"authenticated": False}
 
 def verify_token(request: Request, grace_period: int = 0):
@@ -255,16 +214,37 @@ def verify_token(request: Request, grace_period: int = 0):
 
 @router.post("/logout")
 def logout(response: Response):
-    # Eliminar cookies con todos los parámetros necesarios
+    """
+    Elimina las cookies de autenticación.
+    IMPORTANTE: Para eliminar una cookie correctamente, se deben especificar
+    los mismos parámetros con los que se creó (secure, httponly, samesite, path).
+    """
+    # Eliminar access_token con los mismos parámetros que se creó
     response.delete_cookie(
         key="access_token",
         path="/",
+        secure=True,
+        httponly=True,
         samesite="None"
+    )
+    # Eliminar refresh_token con los mismos parámetros que se creó
+    response.delete_cookie(
+        key="refresh_token",
+        path="/",
+        secure=True,
+        httponly=True,
+        samesite="None"
+    )
+    # También intentar con samesite="Lax" para mayor compatibilidad
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        samesite="Lax"
     )
     response.delete_cookie(
         key="refresh_token",
         path="/",
-        samesite="None"
+        samesite="Lax"
     )
     return {"message": "Logout exitoso"}
 
