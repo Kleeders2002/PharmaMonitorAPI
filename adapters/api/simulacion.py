@@ -1,7 +1,7 @@
 # TEMPORAL: Endpoint para ejecutar simulación de insulina
 # Este archivo se puede eliminar después de usar el script
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select, delete
 from adapters.db.sqlmodel_database import get_session
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -56,10 +56,6 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
 
             if pm_ids:
                 # Borrar alertas relacionadas (DELETE directo)
-                session.exec(
-                    select(Alerta).where(Alerta.id_producto_monitoreado.in_(pm_ids))
-                )
-                from sqlmodel import delete
                 session.exec(delete(Alerta).where(Alerta.id_producto_monitoreado.in_(pm_ids)))
 
                 # Borrar datos de monitoreo (DELETE directo)
