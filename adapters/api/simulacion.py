@@ -8,7 +8,7 @@ from typing import Dict, Any
 import random
 from datetime import datetime, timedelta, timezone
 
-router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL"])
+router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL - v2"])
 
 class SimulacionResponse(BaseModel):
     status: str
