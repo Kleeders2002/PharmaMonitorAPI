@@ -14,7 +14,7 @@ from core.models.productomonitoreado import ProductoMonitoreado
 from core.models.datomonitoreo import DatoMonitoreo
 from core.models.alerta import Alerta, EstadoAlerta
 
-router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL - v3"])
+router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL - v4"])
 
 class SimulacionResponse(BaseModel):
     status: str
