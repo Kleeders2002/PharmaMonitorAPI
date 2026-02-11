@@ -44,39 +44,35 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
             select(ProductoFarmaceutico).where(ProductoFarmaceutico.nombre.ilike("%insulina%"))
         ).all()
 
-        for pf in productos_insulina:
-            # Obtener productos monitoreados relacionados
-            productos_monitoreados = session.exec(
-                select(ProductoMonitoreado).where(ProductoMonitoreado.id_producto == pf.id)
+        # Obtener IDs de productos para borrar en cascada con DELETE directo
+        producto_ids = [pf.id for pf in productos_insulina]
+
+        if producto_ids:
+            # Obtener productos monitoreados relacionados (solo IDs)
+            productos_mon = session.exec(
+                select(ProductoMonitoreado).where(ProductoMonitoreado.id_producto.in_(producto_ids))
             ).all()
+            pm_ids = [pm.id for pm in productos_mon]
 
-            for pm in productos_monitoreados:
-                # Eliminar alertas relacionadas
-                alertas = session.exec(
-                    select(Alerta).where(Alerta.id_producto_monitoreado == pm.id)
-                ).all()
-                for alerta in alertas:
-                    session.delete(alerta)
+            if pm_ids:
+                # Borrar alertas relacionadas (DELETE directo)
+                session.exec(
+                    select(Alerta).where(Alerta.id_producto_monitoreado.in_(pm_ids))
+                )
+                from sqlmodel import delete
+                session.exec(delete(Alerta).where(Alerta.id_producto_monitoreado.in_(pm_ids)))
 
-                # Eliminar datos de monitoreo relacionados
-                datos = session.exec(
-                    select(DatoMonitoreo).where(DatoMonitoreo.id_producto_monitoreado == pm.id)
-                ).all()
-                for dato in datos:
-                    session.delete(dato)
+                # Borrar datos de monitoreo (DELETE directo)
+                session.exec(delete(DatoMonitoreo).where(DatoMonitoreo.id_producto_monitoreado.in_(pm_ids)))
 
-                # Eliminar producto monitoreado
-                session.delete(pm)
+                # Borrar productos monitoreados
+                session.exec(delete(ProductoMonitoreado).where(ProductoMonitoreado.id.in_(pm_ids)))
 
-            # Eliminar producto farmacéutico
-            session.delete(pf)
+            # Borrar productos farmacéuticos
+            session.exec(delete(ProductoFarmaceutico).where(ProductoFarmaceutico.id.in_(producto_ids)))
 
         # Eliminar condición de almacenamiento "Refrigeración Insulina" si existe
-        condiciones = session.exec(
-            select(CondicionAlmacenamiento).where(CondicionAlmacenamiento.nombre == "Refrigeración Insulina")
-        ).all()
-        for cond in condiciones:
-            session.delete(cond)
+        session.exec(delete(CondicionAlmacenamiento).where(CondicionAlmacenamiento.nombre == "Refrigeración Insulina"))
 
         session.commit()
 
