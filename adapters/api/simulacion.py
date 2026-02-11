@@ -75,14 +75,14 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         # =====================================================================
         condicion = CondicionAlmacenamiento(
             nombre="Refrigeración Insulina",
-            temperatura_minima=2.0,
-            temperatura_maxima=8.0,
-            humedad_relativa_minima=30.0,
-            humedad_relativa_maxima=60.0,
-            iluminancia_minima=0.0,
-            iluminancia_maxima=300.0,
-            presion_minima=865.0,
-            presion_maxima=875.0
+            temperatura_min=2.0,
+            temperatura_max=8.0,
+            humedad_min=30.0,
+            humedad_max=60.0,
+            lux_min=0.0,
+            lux_max=300.0,
+            presion_min=865.0,
+            presion_max=875.0
         )
         session.add(condicion)
         session.commit()
@@ -230,8 +230,8 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
             id_condicion=condicion.id,
             parametro_afectado="temperatura",
             valor_medido=8.4,
-            limite_min=condicion.temperatura_minima,
-            limite_max=condicion.temperatura_maxima,
+            limite_min=condicion.temperatura_min,
+            limite_max=condicion.temperatura_max,
             mensaje="ALERTA ACTIVADA: Temperatura fuera de rango (8.4°C). Posible apertura de puerta del refrigerador.",
             fecha_generacion=fecha_alerta_inicio,
             estado=EstadoAlerta.PENDIENTE
