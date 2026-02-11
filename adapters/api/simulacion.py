@@ -5,6 +5,8 @@ from sqlmodel import Session
 from adapters.db.sqlmodel_database import get_session
 from pydantic import BaseModel
 from typing import Dict, Any
+import random
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL"])
 
@@ -24,14 +26,7 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
     - La importación en main.py
     """
     try:
-        # Importar funciones del script de simulación
-        import sys
-        import os
-        from datetime import datetime, timedelta, timezone
         from sqlmodel import select
-        import random
-
-        # Importar modelos necesarios
         from core.models.condicionalmacenamiento import CondicionAlmacenamiento
         from core.models.formafarmaceutica import FormaFarmaceutica
         from core.models.productofarmaceutico import ProductoFarmaceutico
@@ -44,31 +39,44 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         # =====================================================================
         # PASO 1: Limpiar datos existentes de insulina
         # =====================================================================
-        alertas = session.exec(select(Alerta)).all()
-        for alerta in alertas:
-            if alerta.producto_monitoreado and "insulina" in alerta.producto_monitoreado.producto_farmaceutico.nombre.lower():
-                session.delete(alerta)
+        # Buscar el producto "Insulina Humana"
+        productos_insulina = session.exec(
+            select(ProductoFarmaceutico).where(ProductoFarmaceutico.nombre.ilike("%insulina%"))
+        ).all()
 
-        datos_monitoreo = session.exec(select(DatoMonitoreo)).all()
-        for dato in datos_monitoreo:
-            prod = session.get(ProductoMonitoreado, dato.producto_monitoreo_id)
-            if prod and "insulina" in prod.producto_farmaceutico.nombre.lower():
-                session.delete(dato)
+        for pf in productos_insulina:
+            # Obtener productos monitoreados relacionados
+            productos_monitoreados = session.exec(
+                select(ProductoMonitoreado).where(ProductoMonitoreado.id_producto == pf.id)
+            ).all()
 
-        productos_monitoreados = session.exec(select(ProductoMonitoreado)).all()
-        for pm in productos_monitoreados:
-            if "insulina" in pm.producto_farmaceutico.nombre.lower():
+            for pm in productos_monitoreados:
+                # Eliminar alertas relacionadas
+                alertas = session.exec(
+                    select(Alerta).where(Alerta.id_producto_monitoreado == pm.id)
+                ).all()
+                for alerta in alertas:
+                    session.delete(alerta)
+
+                # Eliminar datos de monitoreo relacionados
+                datos = session.exec(
+                    select(DatoMonitoreo).where(DatoMonitoreo.id_producto_monitoreado == pm.id)
+                ).all()
+                for dato in datos:
+                    session.delete(dato)
+
+                # Eliminar producto monitoreado
                 session.delete(pm)
 
-        productos_farmaceuticos = session.exec(select(ProductoFarmaceutico)).all()
-        for pf in productos_farmaceuticos:
-            if "insulina" in pf.nombre.lower():
-                session.delete(pf)
+            # Eliminar producto farmacéutico
+            session.delete(pf)
 
-        condiciones = session.exec(select(CondicionAlmacenamiento)).all()
+        # Eliminar condición de almacenamiento "Refrigeración Insulina" si existe
+        condiciones = session.exec(
+            select(CondicionAlmacenamiento).where(CondicionAlmacenamiento.nombre == "Refrigeración Insulina")
+        ).all()
         for cond in condiciones:
-            if cond.nombre == "Refrigeración Insulina":
-                session.delete(cond)
+            session.delete(cond)
 
         session.commit()
 
@@ -91,18 +99,11 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         session.refresh(condicion)
 
         # =====================================================================
-        # PASO 3: Crear forma farmacéutica (Insulina)
+        # PASO 3: Obtener o crear forma farmacéutica "Insulina"
         # =====================================================================
         forma = session.exec(
             select(FormaFarmaceutica).where(FormaFarmaceutica.descripcion == "Insulina")
         ).first()
-
-        if not forma:
-            from core.models.formafarmaceutica import FormaFarmaceutica
-            forma = FormaFarmaceutica(descripcion="Insulina")
-            session.add(forma)
-            session.commit()
-            session.refresh(forma)
 
         if not forma:
             forma = FormaFarmaceutica(descripcion="Insulina")
@@ -114,11 +115,15 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         # PASO 4: Crear producto farmacéutico "Insulina Humana"
         # =====================================================================
         producto = ProductoFarmaceutico(
+            id_forma_farmaceutica=forma.id,
+            id_condicion=condicion.id,
             nombre="Insulina Humana",
-            descripcion="Insulina Humana 100 UI/mL - Monitoreo de cadena de frío para prueba piloto",
-            imagen="https://res.cloudinary.com/drlypxphc/image/upload/v1/PharmaMonitor/insulina_humana",
-            forma_farmaceutica_id=forma.id,
-            condicion_almacenamiento_id=condicion.id
+            formula="C257H383N65O77S6",
+            concentracion="100 UI/mL",
+            indicaciones="Tratamiento de diabetes mellitus tipo 1 y tipo 2",
+            contraindicaciones="Hipoglucemia, hipersensibilidad a la insulina",
+            efectos_secundarios="Hipoglucemia, lipodistrofia, reacciones en el sitio de inyección",
+            foto="https://res.cloudinary.com/drlypxphc/image/upload/v1/PharmaMonitor/insulina_humana"
         )
         session.add(producto)
         session.commit()
@@ -128,10 +133,11 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         # PASO 5: Crear producto monitoreado
         # =====================================================================
         producto_monitoreado = ProductoMonitoreado(
-            producto_farmaceutico_id=producto.id,
-            fecha_inicio=datetime(2026, 2, 2, 15, 30, 0, tzinfo=VENEZUELA_TZ),
-            fecha_fin=None,  # Activo
-            activo=True
+            id_producto=producto.id,
+            localizacion="Refrigerador Farmacia - Estante 2",
+            fecha_inicio_monitoreo=datetime(2026, 2, 2, 15, 30, 0, tzinfo=VENEZUELA_TZ),
+            fecha_finalizacion_monitoreo=None,
+            cantidad=10
         )
         session.add(producto_monitoreado)
         session.commit()
@@ -146,6 +152,7 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
 
         fecha_actual = fecha_inicio
         registros_creados = 0
+        dato_alerta_id = None
 
         # Fechas del evento de alerta
         fecha_alerta_inicio = datetime(2026, 2, 3, 14, 23, 32, tzinfo=VENEZUELA_TZ)
@@ -204,14 +211,20 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
 
             # Crear el dato de monitoreo
             dato = DatoMonitoreo(
-                producto_monitoreado_id=producto_monitoreado.id,
+                id_producto_monitoreado=producto_monitoreado.id,
+                fecha=fecha_actual,
                 temperatura=round(temperatura, 1),
-                humedad_relativa=round(humedad, 1),
-                iluminancia=round(lux, 1),
-                presion_atmosferica=round(presion, 1),
-                fecha_hora=fecha_actual
+                humedad=round(humedad, 1),
+                lux=round(lux, 1),
+                presion=round(presion, 1)
             )
             session.add(dato)
+            session.flush()  # Para obtener el ID del dato
+
+            # Guardar el ID del dato de la alerta para crear la alerta después
+            if fecha_actual == fecha_alerta_inicio:
+                dato_alerta_id = dato.id
+
             registros_creados += 1
             fecha_actual += intervalo
 
@@ -220,10 +233,17 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
         # =====================================================================
         # PASO 7: Crear alerta del evento
         # =====================================================================
+        # Crear la alerta con el dato de monitoreo que supera el límite
         alerta = Alerta(
-            producto_monitoreado_id=producto_monitoreado.id,
-            fecha_hora=fecha_alerta_inicio,
-            descripcion="ALERTA ACTIVADA: Temperatura fuera de rango (8.4°C). Posible apertura de puerta del refrigerador.",
+            id_producto_monitoreado=producto_monitoreado.id,
+            id_dato_monitoreo=dato_alerta_id,
+            id_condicion=condicion.id,
+            parametro_afectado="temperatura",
+            valor_medido=8.4,
+            limite_min=condicion.temperatura_minima,
+            limite_max=condicion.temperatura_maxima,
+            mensaje="ALERTA ACTIVADA: Temperatura fuera de rango (8.4°C). Posible apertura de puerta del refrigerador.",
+            fecha_generacion=fecha_alerta_inicio,
             estado=EstadoAlerta.PENDIENTE
         )
         session.add(alerta)
@@ -232,8 +252,10 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
 
         # Actualizar la alerta a RESUELTA cuando finaliza el evento
         alerta.estado = EstadoAlerta.RESUELTA
-        alerta.descripcion = f"ALERTA FINALIZADA: Temperatura normalizada. Evento de apertura de puerta detectado el {fecha_alerta_inicio.strftime('%d/%m/%Y')}. Duración: 20 minutos."
+        alerta.mensaje = f"ALERTA FINALIZADA: Temperatura normalizada. Evento de apertura de puerta detectado el {fecha_alerta_inicio.strftime('%d/%m/%Y')}. Duración: 20 minutos."
         alerta.fecha_resolucion = fecha_alerta_fin
+        duracion_segundos = (fecha_alerta_fin - fecha_alerta_inicio).total_seconds()
+        alerta.duracion_minutos = round(duracion_segundos / 60, 2)
         session.commit()
 
         return {
@@ -243,6 +265,8 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
 
     except Exception as e:
         session.rollback()
+        import traceback
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail=f"Error al ejecutar la simulación: {str(e)}"
