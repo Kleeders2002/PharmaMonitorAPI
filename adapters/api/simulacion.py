@@ -7,8 +7,14 @@ from pydantic import BaseModel
 from typing import Dict, Any
 import random
 from datetime import datetime, timedelta, timezone
+from core.models.condicionalmacenamiento import CondicionAlmacenamiento
+from core.models.formafarmaceutica import FormaFarmaceutica
+from core.models.productofarmaceutico import ProductoFarmaceutico
+from core.models.productomonitoreado import ProductoMonitoreado
+from core.models.datomonitoreo import DatoMonitoreo
+from core.models.alerta import Alerta, EstadoAlerta
 
-router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL - v2"])
+router = APIRouter(prefix="/simulacion", tags=["Simulacion - TEMPORAL - v3"])
 
 class SimulacionResponse(BaseModel):
     status: str
@@ -26,14 +32,6 @@ async def ejecutar_simulacion_insulina(session: Session = Depends(get_session)):
     - La importación en main.py
     """
     try:
-        from sqlmodel import select
-        from core.models.condicionalmacenamiento import CondicionAlmacenamiento
-        from core.models.formafarmaceutica import FormaFarmaceutica
-        from core.models.productofarmaceutico import ProductoFarmaceutico
-        from core.models.productomonitoreado import ProductoMonitoreado
-        from core.models.datomonitoreo import DatoMonitoreo
-        from core.models.alerta import Alerta, EstadoAlerta
-
         VENEZUELA_TZ = timezone(timedelta(hours=-4), name="America/Caracas")
 
         # =====================================================================
