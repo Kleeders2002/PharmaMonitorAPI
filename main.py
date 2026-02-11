@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, create_engine
-from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil, nodemcu, uploadimage
+from adapters.api import usuario, auth, condicionalmacenamiento, productofarmaceutico, formafarmaceutica, productomonitoreado, datomonitoreo, alerta, registro, dashboard, perfil, nodemcu, uploadimage, simulacion  # TEMPORAL
 from adapters.db.sqlmodel_database import init_db, get_session
 from core.models.rol import Rol
 from core.models.formafarmaceutica import FormaFarmaceutica
@@ -59,3 +59,4 @@ app.include_router(registro.router)
 app.include_router(uploadimage.router)  # Cloudinary configurado y habilitado
 app.include_router(auth.router)
 app.include_router(perfil.router)
+app.include_router(simulacion.router)  # TEMPORAL - Eliminar después de usar

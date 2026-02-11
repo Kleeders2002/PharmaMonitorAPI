@@ -9,15 +9,30 @@ simulando una prueba piloto de 7 días con Insulina Humana almacenada en refrige
 
 import sys
 import io
+import os
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 import random
 from datetime import datetime, timedelta, timezone
+from sqlmodel import Session, select, create_engine
+from dotenv import load_dotenv
 
-from sqlmodel import Session, select
-from adapters.db.sqlmodel_database import engine
+# Cargar variables de entorno
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Crear engine con parámetros SSL optimizados para conectar desde Windows
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={
+        "sslmode": "require",
+    },
+    echo=False,
+    pool_pre_ping=True,
+)
 
 from core.models.condicionalmacenamiento import CondicionAlmacenamiento
 from core.models.formafarmaceutica import FormaFarmaceutica

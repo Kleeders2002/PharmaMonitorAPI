@@ -5,7 +5,9 @@
       "Bash(dir:*)",
       "Bash(python -m py_compile:*)",
       "Bash(python:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
